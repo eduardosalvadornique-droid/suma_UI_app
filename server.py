@@ -1,41 +1,22 @@
-from pathlib import Path
 from fastmcp import FastMCP
-from fastmcp.server.apps import ToolUI
+from fastmcp.server.apps import ToolUI, ResourceUI
  
-mcp = FastMCP("Suma Server")
+mcp = FastMCP("My Server")
  
-UI_DIR = Path(__file__).parent / "ui"
+# Register a UI bundle as a resource
+@mcp.resource("ui://dashboard/view.html")
+def dashboard_html() -> str:
+    return Path("./dist/index.html").read_text()
  
-@mcp.resource("ui://sum/{path}")
-def serve_ui(path: str):
-    file_path = UI_DIR / path
+# Tool with a UI — clients render an iframe alongside the result
+@mcp.tool(ui=ToolUI(resource_uri="ui://dashboard/view.html"))
+async def list_users() -> list[dict]:
+    return [{"id": "1", "name": "Alice"}]
  
-    if not file_path.exists():
-        raise FileNotFoundError(f"{path} no encontrado")
- 
-    if file_path.suffix in [".png", ".jpg", ".jpeg", ".gif", ".svg"]:
-        return file_path.read_bytes()
- 
-    return file_path.read_text(encoding="utf-8")
- 
-@mcp.tool(
-    description="""
-    Abre la interfaz visual para sumar dos números.
-    """,
-    ui=ToolUI(resource_uri="ui://sum/index.html"),
-)
-def abrir_sumadora() -> dict:
-    return {}
- 
-@mcp.tool(
-    ui=ToolUI(
-        resource_uri="ui://sum/index.html",
-        visibility=["app"],
-    )
-)
-def suma(a: float, b: float) -> dict:
-    return {"resultado": a + b}
- 
- 
-if __name__ == "__main__":
-    mcp.run()
+# App-only tool — visible to the UI but hidden from the model
+@mcp.tool(ui=ToolUI(
+    resource_uri="ui://dashboard/view.html",
+    visibility=["app"]
+))
+async def delete_user(id: str) -> dict:
+    return {"deleted": True}
