@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h3>Suma de números</h3>
+    <input id="a" placeholder="Número A" type="number" />
+    <input id="b" placeholder="Número B" type="number" />
+    <button onclick="hacerSuma()">Sumar</button>
+    <div id="resultado"></div>
+
+    <script>
+      async function hacerSuma() {
+        const a = +document.getElementById("a").value;
+        const b = +document.getElementById("b").value;
+
+        const res = await fetch("/mcp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            "jsonrpc": "2.0",
+            method: "call_tool",
+            params: { name: "suma", arguments: { a, b } },
+            id: 1
+          })
+        });
+
+        const data = await res.json();
+        document.getElementById("resultado").innerText =
+          "Resultado: " + data.result.resultado;
+      }
+    </script>
+  </body>
+</html>
